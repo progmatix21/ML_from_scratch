@@ -8,6 +8,7 @@ Reference implementation: Create a D2A converter using a
 single perceptron.
 """
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Perceptron():
     """
@@ -31,27 +32,69 @@ class Perceptron():
 
     def __init__(self, n_inputs):
         """Create perceptron with n inputs."""
-        _weights = None
-        _cost = None
-        _epochs = None
         
-        pass
+        self._n_inputs = n_inputs
+        # Generate n_inputs random weights[0,1) and 1 bias.
+        self._weights = np.random.uniform(low=-0.1, high=0.1, size=(n_inputs+1,))
+        # Will get updated at end of every epoch.  At end of training, has all
+        # weights of a trained perceptron.
+        # history of weights
+        self._weights_hist = []
+        # store the initial weights first
+        self._weights_hist.append(self._weights)
         
-    def fit(X,y, epochs=10, batch_size=1):
+        # Array of costs 1 per epoch.
+        self._cost_hist = []
+        
+        # For how many epochs have we trained?
+        self._epochs = 0
+                
+        
+    def fit(self,X,y, epochs=10, batch_size=1):
         """Train the perceptron with X,y
         
         Arguments: 
             epochs: no.of epochs to train
             batch_size: batch size            
         """
+        lr = 0.05  #learning rate
         
-        pass
+        for i in range(epochs):
+            for x_vec,y_true in zip(X,y):
+                x_vec = np.append([1],x_vec) # Prepend 1 for the bias
+                output = np.dot(self._weights,x_vec).squeeze()
+                
+                #Calculate delta_w from error gradient and learning rate
+                #Update the weights
+                delta_w = lr*x_vec*(output-y_true)
+                self._weights = self._weights-delta_w
+
+            #Keep track of the cost function
+            cost_func = 0.5*(output-y_true)**2
+            self._cost_hist.append(cost_func)
+                            
+            #keep weights history
+            self._weights_hist.append(self._weights)
+                
+            self._epochs += 1  #Increment epochs count
+            
+        #Return training history
+        return {"cost":self._cost_hist, "weights":self._weights_hist,"epochs":self._epochs}
         
-    def predict(X):
+    def predict(self,X):
         """
         Predict target y for test data X
         Arguments: X test data
         """
+        np.dot(self._weights, X)
+        
+        
+    def __repr__(self):
+        """
+        Print representation of the object.
+        """
+        return f'perceptron inputs: {self._n_inputs}, epochs: {self._epochs}, weights:{self._weights}'
+
 
 
 class Vector_generator():
@@ -125,12 +168,38 @@ just look at the cost function.
 
 
 if __name__ == "__main__":
-    #training_data = generate_training_data(n_bits=8,n_samples=10)
-    
     # Create a data generator
-    v_gen8bit = Vector_generator(n_bits = 8)
-    print("training data= ", v_gen8bit.get_samples(n_samples=5))
-    print("-"*20)
-    print("training data= ", v_gen8bit.get_samples(n_samples=10))    
-    #print("training data= ", v_gen8bit.get_cons_samples())    
+    v_gen10bit = Vector_generator(n_bits = 10)    
+    X,y = v_gen10bit.get_samples(n_samples=200)
+    
+    #Create the perceptron
+    percep = Perceptron(n_inputs = 10)
+    print(percep)
+    
+    #Train the perceptron
+    training_history = percep.fit(X,y,epochs=20)
+    print(percep)
 
+    #plot the minimization of the cost function and ...    
+    #...the convergence of the weights+bias
+    fig,ax = plt.subplots(1,2, figsize=(15,5))
+    
+    ax[0].plot(np.arange(training_history["epochs"]),training_history["cost"], '.-')
+    ax[0].set_xticks(np.arange(0,training_history["epochs"]+1))
+    ax[0].set_title("Cost function vs. Epoch")
+    ax[0].set_xlabel("Epoch")
+    ax[0].set_ylabel("Cost")
+    ax[0].grid()
+    
+    # An interesting edge condition due to our implementation
+    # There is one more set of weights(or one less cost) because we do not update
+    # cost while exiting the last epoch.
+    ax[1].plot(np.arange(training_history["epochs"]+1),training_history["weights"], '.-')
+    ax[1].set_xticks(np.arange(0,training_history["epochs"]+1))
+    ax[1].set_title("Weight vs. Epoch")
+    ax[1].set_xlabel("Epoch")
+    ax[1].set_ylabel("Weights")
+    ax[1].grid()
+    
+    plt.show()
+    
