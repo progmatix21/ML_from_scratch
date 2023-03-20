@@ -27,8 +27,11 @@ class Perceptron():
             training data X,y for n_epochs(default 10) with batch size
             of batch_size(default 1)
         predict(X): predict y for test data X on an already fitted perceptron.
-    
-    """
+            
+    Since the training  and test data are deterministic,
+    we do not need cross-validation.  It is enough if we
+    just look at the cost function.
+"""
 
     def __init__(self, n_inputs):
         """Create perceptron with n inputs."""
@@ -57,7 +60,7 @@ class Perceptron():
             epochs: no.of epochs to train
             batch_size: batch size            
         """
-        lr = 0.05  #learning rate
+        lr = 0.01  #learning rate
         
         for i in range(epochs):
             for x_vec,y_true in zip(X,y):
@@ -65,7 +68,7 @@ class Perceptron():
                 output = np.dot(self._weights,x_vec).squeeze()
                 
                 #Calculate delta_w from error gradient and learning rate
-                #Update the weights
+                ######### Update the weights ############
                 delta_w = lr*x_vec*(output-y_true)
                 self._weights = self._weights-delta_w
 
@@ -86,15 +89,15 @@ class Perceptron():
         Predict target y for test data X
         Arguments: X test data
         """
-        np.dot(self._weights, X)
-        
+        #Insert a 1 in the first column(index 0) of all X rows
+        _X = np.insert(X, 0, 1, axis=1)
+        return np.dot(_X,self._weights)
         
     def __repr__(self):
         """
         Print representation of the object.
         """
-        return f'perceptron inputs: {self._n_inputs}, epochs: {self._epochs}, weights:{self._weights}'
-
+        return f'perceptron <{id(self):x}> inputs:{self._n_inputs}, epochs:{self._epochs}, weights:{self._weights}'
 
 
 class Vector_generator():
@@ -154,18 +157,6 @@ class Vector_generator():
         return self._X_arr, self._y_arr
 
 
-"""
-1. Generate training data
-2. Create perceptron class
-3. Create neural network and train
-4. Predict using test data
-5. Evaluate performance(cost function curve)
-
-Since the training  and test data are deterministic,
-we do not need cross-validation.  It is enough if we
-just look at the cost function.
-"""
-
 
 if __name__ == "__main__":
     # Create a data generator
@@ -177,29 +168,52 @@ if __name__ == "__main__":
     print(percep)
     
     #Train the perceptron
-    training_history = percep.fit(X,y,epochs=20)
+    training_history = percep.fit(X,y,epochs=50)
     print(percep)
 
     #plot the minimization of the cost function and ...    
     #...the convergence of the weights+bias
-    fig,ax = plt.subplots(1,2, figsize=(15,5))
+    #In short, plot the training progress.
+    fig,ax = plt.subplots(1,3, figsize=(15,5))
     
-    ax[0].plot(np.arange(training_history["epochs"]),training_history["cost"], '.-')
-    ax[0].set_xticks(np.arange(0,training_history["epochs"]+1))
+    # Some nuances of plotting. For plotting costs, epochs start at 1
+    # Cost at the end of each epoch    
+    ax[0].plot(np.arange(1,training_history["epochs"]+1),training_history["cost"], '.-')
+    ax[0].set_xticks(np.arange(0,training_history["epochs"]+1,5))
     ax[0].set_title("Cost function vs. Epoch")
     ax[0].set_xlabel("Epoch")
     ax[0].set_ylabel("Cost")
     ax[0].grid()
     
-    # An interesting edge condition due to our implementation
-    # There is one more set of weights(or one less cost) because we do not update
-    # cost while exiting the last epoch.
-    ax[1].plot(np.arange(training_history["epochs"]+1),training_history["weights"], '.-')
-    ax[1].set_xticks(np.arange(0,training_history["epochs"]+1))
+
+    # There is one more set of weights than number of epochs because
+    # We also plot the initial weights before we started the first epoch
+    # Epoch starts with 0
+
+    ax[1].plot(training_history["weights"], '.-')
+    ax[1].set_xticks(np.arange(0,training_history["epochs"]+1,5))
     ax[1].set_title("Weight vs. Epoch")
     ax[1].set_xlabel("Epoch")
     ax[1].set_ylabel("Weights")
     ax[1].grid()
+
+    #Try out predictions with our perceptron
+    #Generate consecutive data
+    Xt,yt = v_gen10bit.get_cons_samples()
+    y_pred = percep.predict(Xt)
+    
+    #Plot y_pred vs. y_true
+    ax[2].scatter(yt, y_pred, c = 'c', alpha=0.5, label='predicted')
+    ax[2].plot(yt,yt, 'k', label='identity')
+    ax[2].set_title("y_pred vs. y_true scaled [0,1]")
+    ax[2].set_xlabel("y_true")
+    ax[2].set_ylabel("y_pred")
+    ax[2].legend(loc='best')
+    ax[2].grid()
+    plt.tight_layout()
+    
     
     plt.show()
+
+    
     
