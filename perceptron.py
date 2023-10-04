@@ -69,8 +69,8 @@ class Perceptron():
                 
                 #Calculate delta_w from error gradient and learning rate
                 ######### Update the weights ############
-                delta_w = lr*x_vec*(output-y_true)
-                self._weights = self._weights-delta_w
+                delta_w = lr*x_vec*(y_true-output)
+                self._weights = self._weights+delta_w
 
             #Keep track of the cost function
             cost_func = 0.5*(output-y_true)**2
