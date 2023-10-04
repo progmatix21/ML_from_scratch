@@ -48,6 +48,7 @@ if __name__ == '__main__':
     # Plot the convergence of weights
     plt.plot(history, '-')
     plt.legend([f'$w_{i}$' for i in range(len(weights))])
+    plt.title('Converging weights')
     plt.grid()
     plt.show()
     # Plot data and trace of the line
@@ -56,6 +57,7 @@ if __name__ == '__main__':
         for ws in history:
             plt.plot(X[:,0], [ws[0]+np.dot(Xrow,ws[1:]) for Xrow in X], color='Blue',alpha=0.1)
         plt.legend(['data','prediction'])
+        plt.title('OLS straight line regression')
         plt.show()
 
     #'''
@@ -82,6 +84,7 @@ if __name__ == '__main__':
 
     plt.legend(['True','Estimated'])
     plt.grid()
+    plt.title('OLS basis function regression')    
     plt.show()
     #'''
 
